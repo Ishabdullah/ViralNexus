@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.viralnexus.game.engine.GameManager
 import com.viralnexus.game.models.*
+import com.viralnexus.game.utils.formatNumber
 import kotlinx.coroutines.delay
 
 @Composable
@@ -26,6 +27,10 @@ fun GameScreen(
     var selectedTab by remember { mutableStateOf(0) }
     var gameStarted by remember { mutableStateOf(false) }
     var currentGameStatus by remember { mutableStateOf(GameStatus.IN_PROGRESS) }
+
+    // Cache stats to reduce expensive recalculations
+    var cachedStats by remember { mutableStateOf<GameStatistics?>(null) }
+    var lastStatsUpdate by remember { mutableStateOf(0L) }
 
     if (!gameStarted) {
         // Show setup screen
@@ -49,7 +54,15 @@ fun GameScreen(
     LaunchedEffect(gameStarted, currentGameStatus) {
         while (gameStarted && currentGameStatus == GameStatus.IN_PROGRESS) {
             gameManager.update()
-            currentGameStatus = gameManager.getGameStatistics()?.gameStatus ?: GameStatus.IN_PROGRESS
+
+            // Update cached stats less frequently (every 500ms instead of 100ms)
+            val now = System.currentTimeMillis()
+            if (now - lastStatsUpdate > 500) {
+                cachedStats = gameManager.getGameStatistics()
+                lastStatsUpdate = now
+                currentGameStatus = cachedStats?.gameStatus ?: GameStatus.IN_PROGRESS
+            }
+
             delay(100) // Update 10 times per second
         }
     }
@@ -60,8 +73,8 @@ fun GameScreen(
             .background(Color(0xFF0D1B2A))
             .padding(16.dp)
     ) {
-        // Top stats bar
-        GameStatsBar(gameManager)
+        // Top stats bar - use cached stats for better performance
+        GameStatsBar(cachedStats)
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -161,8 +174,8 @@ fun SpeedButton(label: String, isSelected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-fun GameStatsBar(gameManager: GameManager) {
-    val stats = gameManager.getGameStatistics() ?: return
+fun GameStatsBar(stats: GameStatistics?) {
+    if (stats == null) return
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -185,7 +198,7 @@ fun GameStatsBar(gameManager: GameManager) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                StatItem("Countries", "${stats.infectedCountries}/56", Color(0xFF06FFA5))
+                StatItem("Countries", "${stats.infectedCountries}/58", Color(0xFF06FFA5))
                 StatItem("Day", stats.elapsedDays.toString(), Color(0xFF00B4D8))
                 StatItem("Cure", "${(stats.cureProgress * 100).toInt()}%", Color(0xFFFFB703))
             }
@@ -302,6 +315,8 @@ fun CountryCard(country: Country) {
 
 @Composable
 fun UpgradesTab(gameManager: GameManager) {
+    // Null check to prevent crashes
+    val gameState = gameManager.getCurrentGame() ?: return
     var selectedCategory by remember { mutableStateOf(UpgradeCategory.TRANSMISSION) }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -438,7 +453,22 @@ fun UpgradeCard(upgrade: Upgrade, gameManager: GameManager) {
 
 @Composable
 fun StatisticsTab(gameManager: GameManager) {
-    val stats = gameManager.getGameStatistics() ?: return
+    // Null check for game statistics
+    val stats = gameManager.getGameStatistics()
+    if (stats == null) {
+        Card(
+            modifier = Modifier.fillMaxSize(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1B263B))
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("No game data available", color = Color(0xFF778DA9))
+            }
+        }
+        return
+    }
 
     Card(
         modifier = Modifier.fillMaxSize(),
@@ -467,7 +497,7 @@ fun StatisticsTab(gameManager: GameManager) {
                 Divider(color = Color(0xFF415A77))
                 Spacer(modifier = Modifier.height(16.dp))
 
-                StatisticRow("Infected Countries", "${stats.infectedCountries}/56", Color(0xFFF77F00))
+                StatisticRow("Infected Countries", "${stats.infectedCountries}/58", Color(0xFFF77F00))
                 StatisticRow("Fully Infected", "${stats.fullyInfectedCountries}", Color(0xFFE63946))
                 StatisticRow("Global Infection Rate", "${(stats.globalInfectionRate * 100).toInt()}%", Color(0xFFF77F00))
                 StatisticRow("Global Death Rate", "${(stats.globalDeathRate * 100).toInt()}%", Color(0xFF9D4EDD))
@@ -581,14 +611,5 @@ fun NavButton(text: String, isSelected: Boolean, color: Color = Color(0xFF06FFA5
             color = if (isSelected) Color.White else Color(0xFF778DA9),
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
         )
-    }
-}
-
-fun formatNumber(number: Long): String {
-    return when {
-        number >= 1_000_000_000 -> String.format("%.1fB", number / 1_000_000_000.0)
-        number >= 1_000_000 -> String.format("%.1fM", number / 1_000_000.0)
-        number >= 1_000 -> String.format("%.1fK", number / 1_000.0)
-        else -> number.toString()
     }
 }

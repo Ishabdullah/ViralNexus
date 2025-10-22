@@ -200,6 +200,34 @@ object WorldData {
                 seaports = 0
             ),
             Country(
+                id = "austria",
+                name = "Austria",
+                population = 9000000,
+                healthcareLevel = 0.86f,
+                climateType = ClimateType.TEMPERATE,
+                wealthLevel = WealthLevel.WEALTHY,
+                urbanization = 0.66f,
+                latitude = 47.52f,
+                longitude = 14.55f,
+                borders = listOf("germany", "czech_republic", "slovakia", "italy"),
+                airports = 6,
+                seaports = 0
+            ),
+            Country(
+                id = "slovakia",
+                name = "Slovakia",
+                population = 5500000,
+                healthcareLevel = 0.77f,
+                climateType = ClimateType.TEMPERATE,
+                wealthLevel = WealthLevel.DEVELOPING,
+                urbanization = 0.54f,
+                latitude = 48.67f,
+                longitude = 19.70f,
+                borders = listOf("czech_republic", "austria", "poland", "ukraine"),
+                airports = 3,
+                seaports = 0
+            ),
+            Country(
                 id = "italy",
                 name = "Italy",
                 population = 60000000,

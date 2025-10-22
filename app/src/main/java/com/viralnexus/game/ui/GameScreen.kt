@@ -24,13 +24,14 @@ fun GameScreen(
     onExit: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
-    val gameState = gameManager.getCurrentGame()
+    var gameState by remember { mutableStateOf(gameManager.getCurrentGame()) }
 
     if (gameState == null) {
         // Show setup screen
         GameSetupScreen(
             onStartGame = { pathogenType, pathogenName, difficulty, startingCountry ->
                 gameManager.startNewGame(pathogenType, pathogenName, difficulty, startingCountry)
+                gameState = gameManager.getCurrentGame() // Trigger recomposition
             }
         )
         return

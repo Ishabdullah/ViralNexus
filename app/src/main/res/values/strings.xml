@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Viral Nexus</string>
+    <string name="game_subtitle">Evolution of Contagion</string>
+    <string name="new_pandemic">New Pandemic</string>
+    <string name="continue_outbreak">Continue Outbreak</string>
+    <string name="pathogen_research">Pathogen Research</string>
+    <string name="global_statistics">Global Statistics</string>
+    <string name="settings">Settings</string>
+    <string name="infected">Infected</string>
+    <string name="dead">Dead</string>
+    <string name="dna_points">DNA Points</string>
+    <string name="transmissions">Transmissions</string>
+    <string name="symptoms">Symptoms</string>
+    <string name="abilities">Abilities</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="game_over">Game Over</string>
+    <string name="victory">Victory</string>
+    <string name="defeat">Defeat</string>
+</resources>

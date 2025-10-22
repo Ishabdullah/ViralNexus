@@ -38,11 +38,35 @@ data class Country(
     val airports: Int = 0,
     val seaports: Int = 0
 ) {
+    init {
+        // Validate immutable properties on creation
+        require(population >= 0) { "Population cannot be negative: $population" }
+        require(healthcareLevel in 0f..1f) { "Healthcare level must be 0-1: $healthcareLevel" }
+        require(urbanization in 0f..1f) { "Urbanization must be 0-1: $urbanization" }
+        require(airports >= 0) { "Airports cannot be negative: $airports" }
+        require(seaports >= 0) { "Seaports cannot be negative: $seaports" }
+
+        // Validate mutable properties
+        require(infected >= 0) { "Infected cannot be negative: $infected" }
+        require(dead >= 0) { "Dead cannot be negative: $dead" }
+        require(cured >= 0) { "Cured cannot be negative: $cured" }
+        require(infected + dead + cured <= population) {
+            "Total affected ($infected + $dead + $cured = ${infected + dead + cured}) cannot exceed population ($population)"
+        }
+    }
+
     /**
      * Get the number of healthy individuals
      */
     val healthy: Long
-        get() = (population - infected - dead - cured).coerceAtLeast(0)
+        get() {
+            val affected = infected + dead + cured
+            if (affected > population) {
+                // Data corruption detected - log warning
+                return 0L
+            }
+            return population - affected
+        }
 
     /**
      * Get infection percentage (0.0 to 1.0)

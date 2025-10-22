@@ -79,22 +79,25 @@ class GameManager {
         // Run simulation tick
         infectionEngine.simulateTick(game, deltaTime)
 
-        // Track DNA after update
+        // Track DNA after update - safe callback invoke
         val dnaAfter = game.pathogen.dnaPoints
         if (dnaAfter > dnaBefore) {
-            onDNAAwarded?.invoke(dnaAfter - dnaBefore)
+            val dnaAwarded = dnaAfter - dnaBefore
+            onDNAAwarded?.invoke(dnaAwarded)  // Safe nullable invoke
         }
 
-        // Check for new news events
+        // Check for new news events - safe with lastOrNull()
         if (game.newsEvents.isNotEmpty()) {
-            val latestEvent = game.newsEvents.last()
-            onNewsEvent?.invoke(latestEvent)
+            val latestEvent = game.newsEvents.lastOrNull()
+            if (latestEvent != null) {
+                onNewsEvent?.invoke(latestEvent)  // Safe nullable invoke
+            }
         }
 
-        // Check game over conditions
+        // Check game over conditions - safe callback invoke
         val status = game.getGameStatus()
         if (status != GameStatus.IN_PROGRESS) {
-            onGameOver?.invoke(status)
+            onGameOver?.invoke(status)  // Safe nullable invoke
         }
     }
 

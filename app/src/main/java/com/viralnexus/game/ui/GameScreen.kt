@@ -63,6 +63,11 @@ fun GameScreen(
         // Top stats bar
         GameStatsBar(gameManager)
 
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Game controls (Pause/Resume and Speed)
+        GameControls(gameManager, gameState)
+
         Spacer(modifier = Modifier.height(16.dp))
 
         // Main content area
@@ -79,6 +84,78 @@ fun GameScreen(
             selectedTab = selectedTab,
             onTabSelected = { selectedTab = it },
             onExit = onExit
+        )
+    }
+}
+
+@Composable
+fun GameControls(gameManager: GameManager, gameState: GameState) {
+    var isPaused by remember { mutableStateOf(gameState.isPaused) }
+    var currentSpeed by remember { mutableStateOf(gameState.gameSpeed) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF1B263B), RoundedCornerShape(8.dp))
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Pause/Resume Button
+        Button(
+            onClick = {
+                gameManager.togglePause()
+                isPaused = !isPaused
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isPaused) Color(0xFF06FFA5) else Color(0xFFE63946)
+            ),
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(if (isPaused) "▶ Resume" else "⏸ Pause", fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        // Game Speed Selector
+        Row(
+            modifier = Modifier.weight(2f),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            listOf(
+                GameSpeed.SLOW to "0.5x",
+                GameSpeed.NORMAL to "1x",
+                GameSpeed.FAST to "2x",
+                GameSpeed.ULTRA to "4x"
+            ).forEach { (speed, label) ->
+                SpeedButton(
+                    label = label,
+                    isSelected = currentSpeed == speed,
+                    onClick = {
+                        gameManager.setGameSpeed(speed)
+                        currentSpeed = speed
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SpeedButton(label: String, isSelected: Boolean, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .padding(horizontal = 2.dp),
+        color = if (isSelected) Color(0xFFE63946) else Color(0xFF415A77),
+        shape = RoundedCornerShape(6.dp)
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+            fontSize = 11.sp,
+            color = Color.White,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
         )
     }
 }

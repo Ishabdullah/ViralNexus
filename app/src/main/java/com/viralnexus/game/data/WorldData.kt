@@ -186,6 +186,20 @@ object WorldData {
                 seaports = 6
             ),
             Country(
+                id = "czech_republic",
+                name = "Czech Republic",
+                population = 10500000,
+                healthcareLevel = 0.81f,
+                climateType = ClimateType.TEMPERATE,
+                wealthLevel = WealthLevel.DEVELOPING,
+                urbanization = 0.73f,
+                latitude = 49.81f,
+                longitude = 15.47f,
+                borders = listOf("germany", "austria", "poland", "slovakia"),
+                airports = 4,
+                seaports = 0
+            ),
+            Country(
                 id = "italy",
                 name = "Italy",
                 population = 60000000,

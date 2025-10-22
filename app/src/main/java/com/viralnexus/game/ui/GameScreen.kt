@@ -24,23 +24,32 @@ fun GameScreen(
     onExit: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
-    var gameState by remember { mutableStateOf(gameManager.getCurrentGame()) }
+    var gameStarted by remember { mutableStateOf(false) }
+    var currentGameStatus by remember { mutableStateOf(GameStatus.IN_PROGRESS) }
 
-    if (gameState == null) {
+    if (!gameStarted) {
         // Show setup screen
         GameSetupScreen(
             onStartGame = { pathogenType, pathogenName, difficulty, startingCountry ->
-                gameManager.startNewGame(pathogenType, pathogenName, difficulty, startingCountry)
-                gameState = gameManager.getCurrentGame() // Trigger recomposition
+                val newGame = gameManager.startNewGame(pathogenType, pathogenName, difficulty, startingCountry)
+                gameStarted = true // Explicitly trigger recomposition
             }
         )
         return
     }
 
-    // Game update loop
-    LaunchedEffect(Unit) {
-        while (true) {
+    // Get current game state
+    val gameState = gameManager.getCurrentGame()
+    if (gameState == null) {
+        Text("Error: Game failed to initialize", color = Color.Red)
+        return
+    }
+
+    // Game update loop - properly keyed to cancel on game end
+    LaunchedEffect(gameStarted, currentGameStatus) {
+        while (gameStarted && currentGameStatus == GameStatus.IN_PROGRESS) {
             gameManager.update()
+            currentGameStatus = gameManager.getGameStatistics()?.gameStatus ?: GameStatus.IN_PROGRESS
             delay(100) // Update 10 times per second
         }
     }

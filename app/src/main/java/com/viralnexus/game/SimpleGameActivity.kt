@@ -1,50 +1,33 @@
 package com.viralnexus.game
 
-import android.app.Activity
 import android.os.Bundle
-import android.util.Log
-import android.view.ViewGroup
-import android.widget.LinearLayout
-import android.widget.TextView
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import com.viralnexus.game.engine.GameManager
+import com.viralnexus.game.ui.GameScreen
 
-class SimpleGameActivity : Activity() {
+class SimpleGameActivity : ComponentActivity() {
+    private val gameManager = GameManager()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Log.d("SimpleGameActivity", "Creating simple game view")
-
-        try {
-            // Create a simple text-based view instead of OpenGL
-            val layout = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
+        setContent {
+            MaterialTheme {
+                Surface {
+                    GameScreen(
+                        gameManager = gameManager,
+                        onExit = { finish() }
+                    )
+                }
             }
-
-            val titleText = TextView(this).apply {
-                text = "VIRAL NEXUS - PANDEMIC SIMULATION"
-                textSize = 24f
-                setPadding(20, 50, 20, 20)
-            }
-
-            val statusText = TextView(this).apply {
-                text = "3D Engine Loading...\n\nThis is a simplified view while the OpenGL rendering system is being optimized.\n\nThe game features:\n- Global pandemic simulation\n- Real-time country infection tracking\n- Pathogen evolution system\n- Interactive 3D Earth visualization"
-                textSize = 16f
-                setPadding(20, 20, 20, 20)
-            }
-
-            layout.addView(titleText)
-            layout.addView(statusText)
-
-            setContentView(layout)
-
-            Log.d("SimpleGameActivity", "Simple game view created successfully")
-
-        } catch (e: Exception) {
-            Log.e("SimpleGameActivity", "Error creating simple game view", e)
-            finish()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        gameManager.reset()
     }
 }

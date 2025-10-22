@@ -1,0 +1,507 @@
+package com.viralnexus.game.ui
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.viralnexus.game.engine.GameManager
+import com.viralnexus.game.models.*
+import kotlinx.coroutines.delay
+
+@Composable
+fun GameScreen(
+    gameManager: GameManager,
+    onExit: () -> Unit
+) {
+    var selectedTab by remember { mutableStateOf(0) }
+    val gameState = gameManager.getCurrentGame()
+
+    if (gameState == null) {
+        // Show setup screen
+        GameSetupScreen(
+            onStartGame = { pathogenType, pathogenName, difficulty, startingCountry ->
+                gameManager.startNewGame(pathogenType, pathogenName, difficulty, startingCountry)
+            }
+        )
+        return
+    }
+
+    // Game update loop
+    LaunchedEffect(Unit) {
+        while (true) {
+            gameManager.update()
+            delay(100) // Update 10 times per second
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0D1B2A))
+            .padding(16.dp)
+    ) {
+        // Top stats bar
+        GameStatsBar(gameManager)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Main content area
+        when (selectedTab) {
+            0 -> WorldMapTab(gameState)
+            1 -> UpgradesTab(gameManager)
+            2 -> StatisticsTab(gameManager)
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Bottom navigation
+        BottomNavigation(
+            selectedTab = selectedTab,
+            onTabSelected = { selectedTab = it },
+            onExit = onExit
+        )
+    }
+}
+
+@Composable
+fun GameStatsBar(gameManager: GameManager) {
+    val stats = gameManager.getGameStatistics() ?: return
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1B263B)),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                StatItem("DNA", stats.dnaPoints.toString(), Color(0xFFE63946))
+                StatItem("Infected", formatNumber(stats.totalInfected), Color(0xFFF77F00))
+                StatItem("Dead", formatNumber(stats.totalDead), Color(0xFF9D4EDD))
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                StatItem("Countries", "${stats.infectedCountries}/56", Color(0xFF06FFA5))
+                StatItem("Day", stats.elapsedDays.toString(), Color(0xFF00B4D8))
+                StatItem("Cure", "${(stats.cureProgress * 100).toInt()}%", Color(0xFFFFB703))
+            }
+
+            // Cure progress bar
+            if (stats.cureProgress > 0) {
+                Spacer(modifier = Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    progress = stats.cureProgress,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp),
+                    color = Color(0xFFE63946),
+                    trackColor = Color(0xFF415A77)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun StatItem(label: String, value: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = label,
+            fontSize = 10.sp,
+            color = Color(0xFF778DA9)
+        )
+        Text(
+            text = value,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+    }
+}
+
+@Composable
+fun WorldMapTab(gameState: GameState) {
+    Card(
+        modifier = Modifier.fillMaxSize(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1B263B))
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp)
+        ) {
+            item {
+                Text(
+                    text = "World Status",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            items(gameState.countries.filter { it.infected > 0 || it.dead > 0 }) { country ->
+                CountryCard(country)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun CountryCard(country: Country) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF2D3E50)
+        ),
+        shape = RoundedCornerShape(6.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = country.name,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text("Infected: ${formatNumber(country.infected)}", color = Color(0xFFF77F00), fontSize = 12.sp)
+                    Text("Dead: ${formatNumber(country.dead)}", color = Color(0xFF9D4EDD), fontSize = 12.sp)
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("${(country.infectionRate * 100).toInt()}% infected", color = Color(0xFF06FFA5), fontSize = 12.sp)
+                    Text("Pop: ${formatNumber(country.population)}", color = Color(0xFF778DA9), fontSize = 12.sp)
+                }
+            }
+
+            if (country.infectionRate > 0) {
+                Spacer(modifier = Modifier.height(6.dp))
+                LinearProgressIndicator(
+                    progress = country.infectionRate,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(3.dp),
+                    color = Color(0xFFF77F00),
+                    trackColor = Color(0xFF415A77)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun UpgradesTab(gameManager: GameManager) {
+    var selectedCategory by remember { mutableStateOf(UpgradeCategory.TRANSMISSION) }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Category tabs
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            UpgradeCategory.values().forEach { category ->
+                CategoryChip(
+                    category = category,
+                    isSelected = category == selectedCategory,
+                    onClick = { selectedCategory = category }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Upgrades list
+        Card(
+            modifier = Modifier.fillMaxSize(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1B263B))
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp)
+            ) {
+                val upgrades = gameManager.getUpgradesByCategory(selectedCategory)
+                items(upgrades) { upgrade ->
+                    UpgradeCard(upgrade, gameManager)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CategoryChip(
+    category: UpgradeCategory,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.clickable(onClick = onClick),
+        color = if (isSelected) Color(0xFFE63946) else Color(0xFF415A77),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Text(
+            text = category.displayName,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            color = Color.White,
+            fontSize = 12.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+        )
+    }
+}
+
+@Composable
+fun UpgradeCard(upgrade: Upgrade, gameManager: GameManager) {
+    val gameState = gameManager.getCurrentGame() ?: return
+    val isOwned = gameState.pathogen.hasUpgrade(upgrade.id)
+    val isAvailable = upgrade.isAvailable(gameState.pathogen)
+    val canAfford = upgrade.canAfford(gameState.pathogen)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !isOwned && isAvailable && canAfford) {
+                gameManager.purchaseUpgrade(upgrade.id)
+            },
+        colors = CardDefaults.cardColors(
+            containerColor = when {
+                isOwned -> Color(0xFF2D5016)
+                !isAvailable -> Color(0xFF3C3C3C)
+                canAfford -> Color(0xFF2D3E50)
+                else -> Color(0xFF4A1F1F)
+            }
+        ),
+        shape = RoundedCornerShape(6.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = upgrade.name,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isOwned) Color(0xFF06FFA5) else Color.White
+                    )
+                    if (isOwned) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "✓",
+                            color = Color(0xFF06FFA5),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                Text(
+                    text = upgrade.description,
+                    fontSize = 11.sp,
+                    color = Color(0xFF778DA9),
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+
+            if (!isOwned) {
+                Surface(
+                    color = if (canAfford && isAvailable) Color(0xFFE63946) else Color(0xFF778DA9),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "${upgrade.cost} DNA",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        fontSize = 12.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StatisticsTab(gameManager: GameManager) {
+    val stats = gameManager.getGameStatistics() ?: return
+
+    Card(
+        modifier = Modifier.fillMaxSize(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1B263B))
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            item {
+                Text(
+                    text = "Global Statistics",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+
+                StatisticRow("Total Infected", formatNumber(stats.totalInfected), Color(0xFFF77F00))
+                StatisticRow("Total Deaths", formatNumber(stats.totalDead), Color(0xFF9D4EDD))
+                StatisticRow("Total Healthy", formatNumber(stats.totalHealthy), Color(0xFF06FFA5))
+                StatisticRow("World Population", formatNumber(stats.worldPopulation), Color(0xFF00B4D8))
+
+                Spacer(modifier = Modifier.height(16.dp))
+                Divider(color = Color(0xFF415A77))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                StatisticRow("Infected Countries", "${stats.infectedCountries}/56", Color(0xFFF77F00))
+                StatisticRow("Fully Infected", "${stats.fullyInfectedCountries}", Color(0xFFE63946))
+                StatisticRow("Global Infection Rate", "${(stats.globalInfectionRate * 100).toInt()}%", Color(0xFFF77F00))
+                StatisticRow("Global Death Rate", "${(stats.globalDeathRate * 100).toInt()}%", Color(0xFF9D4EDD))
+
+                Spacer(modifier = Modifier.height(16.dp))
+                Divider(color = Color(0xFF415A77))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                StatisticRow("Cure Progress", "${(stats.cureProgress * 100).toInt()}%", Color(0xFFFFB703))
+                StatisticRow("DNA Points", stats.dnaPoints.toString(), Color(0xFFE63946))
+                StatisticRow("Days Elapsed", stats.elapsedDays.toString(), Color(0xFF00B4D8))
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                when (stats.gameStatus) {
+                    GameStatus.VICTORY -> {
+                        StatusCard("VICTORY!", "You have successfully infected the world!", Color(0xFF06FFA5))
+                    }
+                    GameStatus.DEFEAT -> {
+                        StatusCard("DEFEAT", "The cure was developed before you could win.", Color(0xFFE63946))
+                    }
+                    else -> {}
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StatisticRow(label: String, value: String, color: Color) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            fontSize = 14.sp,
+            color = Color(0xFF778DA9)
+        )
+        Text(
+            text = value,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+    }
+}
+
+@Composable
+fun StatusCard(title: String, message: String, color: Color) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.2f)),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = title,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = message,
+                fontSize = 14.sp,
+                color = Color.White
+            )
+        }
+    }
+}
+
+@Composable
+fun BottomNavigation(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    onExit: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF1B263B), RoundedCornerShape(8.dp))
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        NavButton("World", selectedTab == 0) { onTabSelected(0) }
+        NavButton("Upgrades", selectedTab == 1) { onTabSelected(1) }
+        NavButton("Stats", selectedTab == 2) { onTabSelected(2) }
+        NavButton("Exit", false, Color(0xFFE63946)) { onExit() }
+    }
+}
+
+@Composable
+fun NavButton(text: String, isSelected: Boolean, color: Color = Color(0xFF06FFA5), onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.clickable(onClick = onClick),
+        color = if (isSelected) color else Color.Transparent,
+        shape = RoundedCornerShape(6.dp)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            fontSize = 12.sp,
+            color = if (isSelected) Color.White else Color(0xFF778DA9),
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+        )
+    }
+}
+
+fun formatNumber(number: Long): String {
+    return when {
+        number >= 1_000_000_000 -> String.format("%.1fB", number / 1_000_000_000.0)
+        number >= 1_000_000 -> String.format("%.1fM", number / 1_000_000.0)
+        number >= 1_000 -> String.format("%.1fK", number / 1_000.0)
+        else -> number.toString()
+    }
+}

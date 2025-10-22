@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.viralnexus.game.engine.GameManager
+import com.viralnexus.game.engine.GameStatistics
 import com.viralnexus.game.models.*
 import com.viralnexus.game.utils.formatNumber
 import kotlinx.coroutines.delay

@@ -23,33 +23,33 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.lifecycleScope
+// import androidx.lifecycle.lifecycleScope // Temporarily disabled for Step 1 (unused)
 import com.viralnexus.game.data.UserPreferences
-import com.viralnexus.game.database.GameDatabase
-import com.viralnexus.game.repository.SaveGameRepository
-import com.viralnexus.game.ui.SaveLoadScreen
+// import com.viralnexus.game.database.GameDatabase // Temporarily disabled for Step 1
+// import com.viralnexus.game.repository.SaveGameRepository // Temporarily disabled for Step 1
+// import com.viralnexus.game.ui.SaveLoadScreen // Temporarily disabled for Step 1
 import com.viralnexus.game.ui.SettingsScreen
 import com.viralnexus.game.ui.theme.ViralNexusTheme
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+// import kotlinx.coroutines.flow.first // Temporarily disabled for Step 1 (unused)
+// import kotlinx.coroutines.launch // Temporarily disabled for Step 1 (unused)
 
 class MainActivity : ComponentActivity() {
     private lateinit var userPreferences: UserPreferences
-    private lateinit var saveGameRepository: SaveGameRepository
+    // private lateinit var saveGameRepository: SaveGameRepository // Temporarily disabled for Step 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         userPreferences = UserPreferences(this)
 
-        // Initialize database and repository
-        val database = GameDatabase.getDatabase(this)
-        saveGameRepository = SaveGameRepository(database.saveGameDao())
+        // Initialize database and repository - Temporarily disabled for Step 1
+        // val database = GameDatabase.getDatabase(this)
+        // saveGameRepository = SaveGameRepository(database.saveGameDao())
 
         setContent {
             ViralNexusTheme {
                 var showSettings by remember { mutableStateOf(false) }
-                var showSaveLoad by remember { mutableStateOf(false) }
+                // var showSaveLoad by remember { mutableStateOf(false) } // Temporarily disabled for Step 1
 
                 when {
                     showSettings -> {
@@ -58,6 +58,8 @@ class MainActivity : ComponentActivity() {
                             onBack = { showSettings = false }
                         )
                     }
+                    // Save/Load screen temporarily disabled for Step 1 - will be fixed in Step 3
+                    /*
                     showSaveLoad -> {
                         val savedGames by saveGameRepository.allSaves.collectAsState(initial = emptyList())
 
@@ -88,10 +90,11 @@ class MainActivity : ComponentActivity() {
                             onBack = { showSaveLoad = false }
                         )
                     }
+                    */
                     else -> {
                         MainMenuScreen(
                             onOpenSettings = { showSettings = true },
-                            onOpenSaveLoad = { showSaveLoad = true },
+                            // onOpenSaveLoad = { showSaveLoad = true }, // Temporarily disabled for Step 1
                             onNewGame = {
                                 startActivity(Intent(this@MainActivity, SimpleGameActivity::class.java))
                             }
@@ -107,7 +110,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainMenuScreen(
     onOpenSettings: () -> Unit = {},
-    onOpenSaveLoad: () -> Unit = {},
+    // onOpenSaveLoad: () -> Unit = {}, // Temporarily disabled for Step 1
     onNewGame: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -160,9 +163,11 @@ fun MainMenuScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Temporarily disabled for Step 1 - will be fixed in Step 3
             MenuButton(
                 text = "CONTINUE OUTBREAK",
-                onClick = onOpenSaveLoad
+                onClick = { /* TODO: Re-enable in Step 3 */ },
+                enabled = false
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -202,17 +207,21 @@ fun MainMenuScreen(
 @Composable
 fun MenuButton(
     text: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean = true
 ) {
     Button(
         onClick = onClick,
+        enabled = enabled,
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
             .clip(RoundedCornerShape(12.dp)),
         colors = ButtonDefaults.buttonColors(
             containerColor = Color(0xFF1E3A8A).copy(alpha = 0.8f),
-            contentColor = Color.White
+            contentColor = Color.White,
+            disabledContainerColor = Color(0xFF1E3A8A).copy(alpha = 0.3f),
+            disabledContentColor = Color.White.copy(alpha = 0.5f)
         ),
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 8.dp,

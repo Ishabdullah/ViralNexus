@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.viralnexus.game.engine.GameStatistics
 import com.viralnexus.game.models.*
-import com.viralnexus.game.repository.SaveGameRepository
+// import com.viralnexus.game.repository.SaveGameRepository // Temporarily disabled for Step 1
 import com.viralnexus.game.utils.formatNumber
 import com.viralnexus.game.viewmodel.GameViewModel
 import kotlinx.coroutines.launch
@@ -25,11 +25,11 @@ import kotlinx.coroutines.launch
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
-    saveGameRepository: SaveGameRepository,
+    // saveGameRepository: SaveGameRepository, // Temporarily disabled for Step 1
     onExit: () -> Unit
 ) {
-    var showSaveDialog by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
+    // var showSaveDialog by remember { mutableStateOf(false) } // Temporarily disabled for Step 1
+    // val coroutineScope = rememberCoroutineScope() // Temporarily disabled for Step 1
     // Collect state from ViewModel
     val gameStarted by viewModel.gameStarted.collectAsState()
     val gameState by viewModel.gameState.collectAsState()
@@ -81,7 +81,7 @@ fun GameScreen(
         BottomNavigation(
             selectedTab = selectedTab,
             onTabSelected = { viewModel.selectTab(it) },
-            onSave = { showSaveDialog = true },
+            onSave = { /* TODO: Re-enable in Step 3 */ }, // Temporarily disabled for Step 1
             onExit = {
                 viewModel.resetGame()
                 onExit()
@@ -89,7 +89,8 @@ fun GameScreen(
         )
     }
 
-    // Save game dialog
+    // Save game dialog - Temporarily disabled for Step 1, will be fixed in Step 3
+    /*
     if (showSaveDialog) {
         var saveName by remember { mutableStateOf("") }
 
@@ -134,6 +135,7 @@ fun GameScreen(
             }
         )
     }
+    */
 }
 
 @Composable

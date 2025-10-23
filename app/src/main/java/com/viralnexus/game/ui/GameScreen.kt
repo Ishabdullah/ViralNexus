@@ -14,16 +14,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.viralnexus.game.engine.GameStatistics
 import com.viralnexus.game.models.*
+import com.viralnexus.game.repository.SaveGameRepository
 import com.viralnexus.game.utils.formatNumber
 import com.viralnexus.game.viewmodel.GameViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
+    saveGameRepository: SaveGameRepository,
     onExit: () -> Unit
 ) {
+    var showSaveDialog by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     // Collect state from ViewModel
     val gameStarted by viewModel.gameStarted.collectAsState()
     val gameState by viewModel.gameState.collectAsState()
@@ -75,9 +81,56 @@ fun GameScreen(
         BottomNavigation(
             selectedTab = selectedTab,
             onTabSelected = { viewModel.selectTab(it) },
+            onSave = { showSaveDialog = true },
             onExit = {
                 viewModel.resetGame()
                 onExit()
+            }
+        )
+    }
+
+    // Save game dialog
+    if (showSaveDialog) {
+        var saveName by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = { showSaveDialog = false },
+            title = { Text("Save Game") },
+            text = {
+                Column {
+                    Text("Enter a name for this save:")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = saveName,
+                        onValueChange = { saveName = it },
+                        label = { Text("Save Name") },
+                        singleLine = true
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            val currentState = viewModel.getCurrentGameState()
+                            if (currentState != null) {
+                                saveGameRepository.saveGame(
+                                    gameState = currentState,
+                                    saveName = saveName.ifBlank { null } ?: "",
+                                    isAutoSave = false
+                                )
+                            }
+                            showSaveDialog = false
+                        }
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSaveDialog = false }) {
+                    Text("Cancel")
+                }
             }
         )
     }
@@ -555,6 +608,7 @@ fun StatusCard(title: String, message: String, color: Color) {
 fun BottomNavigation(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit,
+    onSave: () -> Unit,
     onExit: () -> Unit
 ) {
     Row(
@@ -567,6 +621,7 @@ fun BottomNavigation(
         NavButton("World", selectedTab == 0) { onTabSelected(0) }
         NavButton("Upgrades", selectedTab == 1) { onTabSelected(1) }
         NavButton("Stats", selectedTab == 2) { onTabSelected(2) }
+        NavButton("Save", false, Color(0xFFF77F00)) { onSave() }
         NavButton("Exit", false, Color(0xFFE63946)) { onExit() }
     }
 }

@@ -23,31 +23,80 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 import com.viralnexus.game.data.UserPreferences
+import com.viralnexus.game.database.GameDatabase
+import com.viralnexus.game.repository.SaveGameRepository
+import com.viralnexus.game.ui.SaveLoadScreen
 import com.viralnexus.game.ui.SettingsScreen
 import com.viralnexus.game.ui.theme.ViralNexusTheme
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var userPreferences: UserPreferences
+    private lateinit var saveGameRepository: SaveGameRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         userPreferences = UserPreferences(this)
 
+        // Initialize database and repository
+        val database = GameDatabase.getDatabase(this)
+        saveGameRepository = SaveGameRepository(database.saveGameDao())
+
         setContent {
             ViralNexusTheme {
                 var showSettings by remember { mutableStateOf(false) }
+                var showSaveLoad by remember { mutableStateOf(false) }
 
-                if (showSettings) {
-                    SettingsScreen(
-                        preferences = userPreferences,
-                        onBack = { showSettings = false }
-                    )
-                } else {
-                    MainMenuScreen(
-                        onOpenSettings = { showSettings = true }
-                    )
+                when {
+                    showSettings -> {
+                        SettingsScreen(
+                            preferences = userPreferences,
+                            onBack = { showSettings = false }
+                        )
+                    }
+                    showSaveLoad -> {
+                        val savedGames by saveGameRepository.allSaves.collectAsState(initial = emptyList())
+
+                        SaveLoadScreen(
+                            savedGames = savedGames,
+                            onLoadGame = { saveId ->
+                                lifecycleScope.launch {
+                                    val gameState = saveGameRepository.loadGame(saveId)
+                                    if (gameState != null) {
+                                        // Pass the loaded game state to SimpleGameActivity
+                                        val intent = Intent(this@MainActivity, SimpleGameActivity::class.java)
+                                        intent.putExtra("LOAD_GAME", true)
+                                        intent.putExtra("SAVE_ID", saveId)
+                                        startActivity(intent)
+                                    }
+                                    showSaveLoad = false
+                                }
+                            },
+                            onDeleteGame = { saveId ->
+                                lifecycleScope.launch {
+                                    saveGameRepository.deleteSave(saveId)
+                                }
+                            },
+                            onNewGame = {
+                                showSaveLoad = false
+                                startActivity(Intent(this@MainActivity, SimpleGameActivity::class.java))
+                            },
+                            onBack = { showSaveLoad = false }
+                        )
+                    }
+                    else -> {
+                        MainMenuScreen(
+                            onOpenSettings = { showSettings = true },
+                            onOpenSaveLoad = { showSaveLoad = true },
+                            onNewGame = {
+                                startActivity(Intent(this@MainActivity, SimpleGameActivity::class.java))
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -56,7 +105,11 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainMenuScreen(onOpenSettings: () -> Unit = {}) {
+fun MainMenuScreen(
+    onOpenSettings: () -> Unit = {},
+    onOpenSaveLoad: () -> Unit = {},
+    onNewGame: () -> Unit = {}
+) {
     val context = LocalContext.current
     
     Box(
@@ -102,22 +155,14 @@ fun MainMenuScreen(onOpenSettings: () -> Unit = {}) {
             // Menu Buttons
             MenuButton(
                 text = "NEW PANDEMIC",
-                onClick = {
-                    try {
-                        // Use SimpleGameActivity for now to avoid OpenGL crashes
-                        context.startActivity(Intent(context, SimpleGameActivity::class.java))
-                    } catch (e: Exception) {
-                        // If that fails too, at least log it
-                        println("SimpleGameActivity not available: ${e.message}")
-                    }
-                }
+                onClick = onNewGame
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             MenuButton(
                 text = "CONTINUE OUTBREAK",
-                onClick = { /* TODO: Load saved game */ }
+                onClick = onOpenSaveLoad
             )
             
             Spacer(modifier = Modifier.height(16.dp))

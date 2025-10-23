@@ -208,6 +208,14 @@ class GameManager {
     }
 
     /**
+     * Load a saved game
+     */
+    fun loadGame(gameState: GameState) {
+        currentGame = gameState
+        lastUpdateTime = System.currentTimeMillis()
+    }
+
+    /**
      * Reset the game manager
      */
     fun reset() {

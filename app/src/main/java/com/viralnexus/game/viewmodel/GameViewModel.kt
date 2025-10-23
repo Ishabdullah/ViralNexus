@@ -161,6 +161,23 @@ class GameViewModel : ViewModel() {
      */
     fun getGameManager(): GameManager = gameManager
 
+    /**
+     * Load a game from saved state
+     */
+    fun loadGame(gameState: GameState) {
+        gameManager.loadGame(gameState)
+        _gameState.value = gameState
+        _gameStarted.value = true
+        startGameLoop()
+    }
+
+    /**
+     * Get current game state for saving
+     */
+    fun getCurrentGameState(): GameState? {
+        return _gameState.value
+    }
+
     override fun onCleared() {
         super.onCleared()
         gameLoopJob?.cancel()

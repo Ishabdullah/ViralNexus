@@ -14,58 +14,36 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.viralnexus.game.engine.GameManager
 import com.viralnexus.game.engine.GameStatistics
 import com.viralnexus.game.models.*
 import com.viralnexus.game.utils.formatNumber
-import kotlinx.coroutines.delay
+import com.viralnexus.game.viewmodel.GameViewModel
 
 @Composable
 fun GameScreen(
-    gameManager: GameManager,
+    viewModel: GameViewModel,
     onExit: () -> Unit
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
-    var gameStarted by remember { mutableStateOf(false) }
-    var currentGameStatus by remember { mutableStateOf(GameStatus.IN_PROGRESS) }
-
-    // Cache stats to reduce expensive recalculations
-    var cachedStats by remember { mutableStateOf<GameStatistics?>(null) }
-    var lastStatsUpdate by remember { mutableStateOf(0L) }
+    // Collect state from ViewModel
+    val gameStarted by viewModel.gameStarted.collectAsState()
+    val gameState by viewModel.gameState.collectAsState()
+    val gameStatistics by viewModel.gameStatistics.collectAsState()
+    val selectedTab by viewModel.selectedTab.collectAsState()
 
     if (!gameStarted) {
         // Show setup screen
         GameSetupScreen(
             onStartGame = { pathogenType, pathogenName, difficulty, startingCountry ->
-                val newGame = gameManager.startNewGame(pathogenType, pathogenName, difficulty, startingCountry)
-                gameStarted = true // Explicitly trigger recomposition
+                viewModel.startNewGame(pathogenType, pathogenName, difficulty, startingCountry)
             }
         )
         return
     }
 
     // Get current game state
-    val gameState = gameManager.getCurrentGame()
     if (gameState == null) {
         Text("Error: Game failed to initialize", color = Color.Red)
         return
-    }
-
-    // Game update loop - properly keyed to cancel on game end
-    LaunchedEffect(gameStarted, currentGameStatus) {
-        while (gameStarted && currentGameStatus == GameStatus.IN_PROGRESS) {
-            gameManager.update()
-
-            // Update cached stats less frequently (every 500ms instead of 100ms)
-            val now = System.currentTimeMillis()
-            if (now - lastStatsUpdate > 500) {
-                cachedStats = gameManager.getGameStatistics()
-                lastStatsUpdate = now
-                currentGameStatus = cachedStats?.gameStatus ?: GameStatus.IN_PROGRESS
-            }
-
-            delay(100) // Update 10 times per second
-        }
     }
 
     Column(
@@ -75,20 +53,20 @@ fun GameScreen(
             .padding(16.dp)
     ) {
         // Top stats bar - use cached stats for better performance
-        GameStatsBar(cachedStats)
+        GameStatsBar(gameStatistics)
 
         Spacer(modifier = Modifier.height(8.dp))
 
         // Game controls (Pause/Resume and Speed)
-        GameControls(gameManager, gameState)
+        GameControls(viewModel, gameState!!)
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Main content area
         when (selectedTab) {
-            0 -> WorldMapTab(gameState)
-            1 -> UpgradesTab(gameManager)
-            2 -> StatisticsTab(gameManager)
+            0 -> WorldMapTab(gameState!!)
+            1 -> UpgradesTab(viewModel)
+            2 -> StatisticsTab(gameStatistics)
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -96,17 +74,17 @@ fun GameScreen(
         // Bottom navigation
         BottomNavigation(
             selectedTab = selectedTab,
-            onTabSelected = { selectedTab = it },
-            onExit = onExit
+            onTabSelected = { viewModel.selectTab(it) },
+            onExit = {
+                viewModel.resetGame()
+                onExit()
+            }
         )
     }
 }
 
 @Composable
-fun GameControls(gameManager: GameManager, gameState: GameState) {
-    var isPaused by remember { mutableStateOf(gameState.isPaused) }
-    var currentSpeed by remember { mutableStateOf(gameState.gameSpeed) }
-
+fun GameControls(viewModel: GameViewModel, gameState: GameState) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -118,15 +96,14 @@ fun GameControls(gameManager: GameManager, gameState: GameState) {
         // Pause/Resume Button
         Button(
             onClick = {
-                gameManager.togglePause()
-                isPaused = !isPaused
+                viewModel.togglePause()
             },
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isPaused) Color(0xFF06FFA5) else Color(0xFFE63946)
+                containerColor = if (gameState.isPaused) Color(0xFF06FFA5) else Color(0xFFE63946)
             ),
             modifier = Modifier.weight(1f)
         ) {
-            Text(if (isPaused) "▶ Resume" else "⏸ Pause", fontWeight = FontWeight.Bold)
+            Text(if (gameState.isPaused) "▶ Resume" else "⏸ Pause", fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.width(12.dp))
@@ -144,10 +121,9 @@ fun GameControls(gameManager: GameManager, gameState: GameState) {
             ).forEach { (speed, label) ->
                 SpeedButton(
                     label = label,
-                    isSelected = currentSpeed == speed,
+                    isSelected = gameState.gameSpeed == speed,
                     onClick = {
-                        gameManager.setGameSpeed(speed)
-                        currentSpeed = speed
+                        viewModel.setGameSpeed(speed)
                     }
                 )
             }
@@ -315,9 +291,7 @@ fun CountryCard(country: Country) {
 }
 
 @Composable
-fun UpgradesTab(gameManager: GameManager) {
-    // Null check to prevent crashes
-    val gameState = gameManager.getCurrentGame() ?: return
+fun UpgradesTab(viewModel: GameViewModel) {
     var selectedCategory by remember { mutableStateOf(UpgradeCategory.TRANSMISSION) }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -347,9 +321,9 @@ fun UpgradesTab(gameManager: GameManager) {
                     .fillMaxSize()
                     .padding(12.dp)
             ) {
-                val upgrades = gameManager.getUpgradesByCategory(selectedCategory)
+                val upgrades = viewModel.getUpgradesByCategory(selectedCategory)
                 items(upgrades) { upgrade ->
-                    UpgradeCard(upgrade, gameManager)
+                    UpgradeCard(upgrade, viewModel)
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
@@ -379,8 +353,8 @@ fun CategoryChip(
 }
 
 @Composable
-fun UpgradeCard(upgrade: Upgrade, gameManager: GameManager) {
-    val gameState = gameManager.getCurrentGame() ?: return
+fun UpgradeCard(upgrade: Upgrade, viewModel: GameViewModel) {
+    val gameState = viewModel.getGameManager().getCurrentGame() ?: return
     val isOwned = gameState.pathogen.hasUpgrade(upgrade.id)
     val isAvailable = upgrade.isAvailable(gameState.pathogen)
     val canAfford = upgrade.canAfford(gameState.pathogen)
@@ -389,7 +363,7 @@ fun UpgradeCard(upgrade: Upgrade, gameManager: GameManager) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = !isOwned && isAvailable && canAfford) {
-                gameManager.purchaseUpgrade(upgrade.id)
+                viewModel.purchaseUpgrade(upgrade.id)
             },
         colors = CardDefaults.cardColors(
             containerColor = when {
@@ -453,9 +427,8 @@ fun UpgradeCard(upgrade: Upgrade, gameManager: GameManager) {
 }
 
 @Composable
-fun StatisticsTab(gameManager: GameManager) {
+fun StatisticsTab(stats: GameStatistics?) {
     // Null check for game statistics
-    val stats = gameManager.getGameStatistics()
     if (stats == null) {
         Card(
             modifier = Modifier.fillMaxSize(),

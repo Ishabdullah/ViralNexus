@@ -20,7 +20,7 @@ import com.viralnexus.game.models.*
 // import com.viralnexus.game.repository.SaveGameRepository // Temporarily disabled for Step 1
 import com.viralnexus.game.utils.formatNumber
 import com.viralnexus.game.viewmodel.GameViewModel
-import kotlinx.coroutines.launch
+// import kotlinx.coroutines.launch // Temporarily disabled for Step 1 (unused)
 
 @Composable
 fun GameScreen(

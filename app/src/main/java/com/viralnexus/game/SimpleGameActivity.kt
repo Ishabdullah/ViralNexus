@@ -6,12 +6,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.lifecycle.lifecycleScope
+// import androidx.lifecycle.lifecycleScope // Temporarily disabled for Step 1 (unused)
 // import com.viralnexus.game.database.GameDatabase // Temporarily disabled for Step 1
 // import com.viralnexus.game.repository.SaveGameRepository // Temporarily disabled for Step 1
 import com.viralnexus.game.ui.GameScreen
 import com.viralnexus.game.viewmodel.GameViewModel
-import kotlinx.coroutines.launch
+// import kotlinx.coroutines.launch // Temporarily disabled for Step 1 (unused)
 
 class SimpleGameActivity : ComponentActivity() {
     private val viewModel: GameViewModel by viewModels()

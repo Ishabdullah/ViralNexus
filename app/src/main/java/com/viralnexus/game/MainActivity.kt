@@ -23,14 +23,32 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.viralnexus.game.data.UserPreferences
+import com.viralnexus.game.ui.SettingsScreen
 import com.viralnexus.game.ui.theme.ViralNexusTheme
 
 class MainActivity : ComponentActivity() {
+    private lateinit var userPreferences: UserPreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        userPreferences = UserPreferences(this)
+
         setContent {
             ViralNexusTheme {
-                MainMenuScreen()
+                var showSettings by remember { mutableStateOf(false) }
+
+                if (showSettings) {
+                    SettingsScreen(
+                        preferences = userPreferences,
+                        onBack = { showSettings = false }
+                    )
+                } else {
+                    MainMenuScreen(
+                        onOpenSettings = { showSettings = true }
+                    )
+                }
             }
         }
     }
@@ -38,7 +56,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainMenuScreen() {
+fun MainMenuScreen(onOpenSettings: () -> Unit = {}) {
     val context = LocalContext.current
     
     Box(
@@ -120,7 +138,7 @@ fun MainMenuScreen() {
             
             MenuButton(
                 text = "SETTINGS",
-                onClick = { /* TODO: Settings screen */ }
+                onClick = onOpenSettings
             )
         }
         

@@ -54,13 +54,13 @@ class SaveGameRepository(private val dao: SaveGameDao) {
             gameStateJson = gameStateJson,
             totalInfected = gameState.countries.sumOf { it.infected },
             totalDead = gameState.countries.sumOf { it.dead },
-            dnaPoints = gameState.dnaPoints,
-            elapsedDays = gameState.elapsedDays,
+            dnaPoints = gameState.pathogen.dnaPoints,
+            elapsedDays = gameState.getElapsedDays(),
             cureProgress = gameState.cureProgress,
             infectedCountries = gameState.countries.count { it.infected > 0 },
             difficulty = gameState.difficulty.name,
-            gameStatus = gameState.gameStatus.name,
-            playTimeSeconds = gameState.elapsedTime / 1000
+            gameStatus = gameState.getGameStatus().name,
+            playTimeSeconds = (gameState.currentTime - gameState.startTime) / 1000
         )
 
         val saveId = dao.insertSave(entity)
@@ -147,7 +147,7 @@ class SaveGameRepository(private val dao: SaveGameDao) {
      * Generate a default save name based on game state
      */
     private fun generateSaveName(gameState: GameState): String {
-        val statusText = when (gameState.gameStatus) {
+        val statusText = when (gameState.getGameStatus()) {
             GameStatus.IN_PROGRESS -> "In Progress"
             GameStatus.VICTORY -> "Victory"
             GameStatus.DEFEAT -> "Defeat"
@@ -177,12 +177,12 @@ class SaveGameRepository(private val dao: SaveGameDao) {
             gameStateJson = gameStateJson,
             totalInfected = gameState.countries.sumOf { it.infected },
             totalDead = gameState.countries.sumOf { it.dead },
-            dnaPoints = gameState.dnaPoints,
-            elapsedDays = gameState.elapsedDays,
+            dnaPoints = gameState.pathogen.dnaPoints,
+            elapsedDays = gameState.getElapsedDays(),
             cureProgress = gameState.cureProgress,
             infectedCountries = gameState.countries.count { it.infected > 0 },
-            gameStatus = gameState.gameStatus.name,
-            playTimeSeconds = gameState.elapsedTime / 1000
+            gameStatus = gameState.getGameStatus().name,
+            playTimeSeconds = (gameState.currentTime - gameState.startTime) / 1000
         )
 
         dao.updateSave(updatedEntity)

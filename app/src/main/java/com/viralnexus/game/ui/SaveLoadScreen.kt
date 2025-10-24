@@ -63,7 +63,7 @@ fun SaveLoadScreen(
                     modifier = Modifier.padding(32.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.SaveAlt,
+                        imageVector = Icons.Default.Save,
                         contentDescription = null,
                         modifier = Modifier.size(64.dp),
                         tint = Color(0xFF778DA9)
@@ -215,7 +215,7 @@ fun SaveGameCard(
         ) {
             // Icon based on game status
             val (icon, iconColor) = when (save.gameStatus) {
-                "VICTORY" -> Icons.Default.EmojiEvents to Color(0xFF06FFA5)
+                "VICTORY" -> Icons.Default.CheckCircle to Color(0xFF06FFA5)
                 "DEFEAT" -> Icons.Default.Cancel to Color(0xFFE63946)
                 else -> Icons.Default.PlayArrow to Color(0xFFF77F00)
             }
@@ -268,12 +268,12 @@ fun SaveGameCard(
 
                 // Stats
                 Row {
-                    StatChip(
+                    SaveStatChip(
                         label = "Day ${save.elapsedDays}",
                         color = Color(0xFF00B4D8)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    StatChip(
+                    SaveStatChip(
                         label = "${save.infectedCountries}/58 countries",
                         color = Color(0xFFF77F00)
                     )
@@ -282,12 +282,12 @@ fun SaveGameCard(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Row {
-                    StatChip(
+                    SaveStatChip(
                         label = "${formatNumber(save.totalInfected)} infected",
                         color = Color(0xFFF77F00)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    StatChip(
+                    SaveStatChip(
                         label = "${formatNumber(save.totalDead)} dead",
                         color = Color(0xFF9D4EDD)
                     )
@@ -316,7 +316,7 @@ fun SaveGameCard(
 }
 
 @Composable
-fun StatChip(label: String, color: Color) {
+fun SaveStatChip(label: String, color: Color) {
     Surface(
         color = color.copy(alpha = 0.2f),
         shape = RoundedCornerShape(4.dp)

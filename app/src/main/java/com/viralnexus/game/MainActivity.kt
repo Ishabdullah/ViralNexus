@@ -23,33 +23,33 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-// import androidx.lifecycle.lifecycleScope // Temporarily disabled for Step 1 (unused)
+import androidx.lifecycle.lifecycleScope
 import com.viralnexus.game.data.UserPreferences
-// import com.viralnexus.game.database.GameDatabase // Temporarily disabled for Step 1
-// import com.viralnexus.game.repository.SaveGameRepository // Temporarily disabled for Step 1
-// import com.viralnexus.game.ui.SaveLoadScreen // Temporarily disabled for Step 1
+import com.viralnexus.game.database.GameDatabase
+import com.viralnexus.game.repository.SaveGameRepository
+import com.viralnexus.game.ui.SaveLoadScreen
 import com.viralnexus.game.ui.SettingsScreen
 import com.viralnexus.game.ui.theme.ViralNexusTheme
-// import kotlinx.coroutines.flow.first // Temporarily disabled for Step 1 (unused)
-// import kotlinx.coroutines.launch // Temporarily disabled for Step 1 (unused)
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var userPreferences: UserPreferences
-    // private lateinit var saveGameRepository: SaveGameRepository // Temporarily disabled for Step 1
+    private lateinit var saveGameRepository: SaveGameRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         userPreferences = UserPreferences(this)
 
-        // Initialize database and repository - Temporarily disabled for Step 1
-        // val database = GameDatabase.getDatabase(this)
-        // saveGameRepository = SaveGameRepository(database.saveGameDao())
+        // Initialize database and repository
+        val database = GameDatabase.getDatabase(this)
+        saveGameRepository = SaveGameRepository(database.saveGameDao())
 
         setContent {
             ViralNexusTheme {
                 var showSettings by remember { mutableStateOf(false) }
-                // var showSaveLoad by remember { mutableStateOf(false) } // Temporarily disabled for Step 1
+                var showSaveLoad by remember { mutableStateOf(false) }
 
                 when {
                     showSettings -> {
@@ -58,8 +58,6 @@ class MainActivity : ComponentActivity() {
                             onBack = { showSettings = false }
                         )
                     }
-                    // Save/Load screen temporarily disabled for Step 1 - will be fixed in Step 3
-                    /*
                     showSaveLoad -> {
                         val savedGames by saveGameRepository.allSaves.collectAsState(initial = emptyList())
 
@@ -90,11 +88,10 @@ class MainActivity : ComponentActivity() {
                             onBack = { showSaveLoad = false }
                         )
                     }
-                    */
                     else -> {
                         MainMenuScreen(
                             onOpenSettings = { showSettings = true },
-                            // onOpenSaveLoad = { showSaveLoad = true }, // Temporarily disabled for Step 1
+                            onOpenSaveLoad = { showSaveLoad = true },
                             onNewGame = {
                                 startActivity(Intent(this@MainActivity, SimpleGameActivity::class.java))
                             }
@@ -110,7 +107,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainMenuScreen(
     onOpenSettings: () -> Unit = {},
-    // onOpenSaveLoad: () -> Unit = {}, // Temporarily disabled for Step 1
+    onOpenSaveLoad: () -> Unit = {},
     onNewGame: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -163,11 +160,9 @@ fun MainMenuScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Temporarily disabled for Step 1 - will be fixed in Step 3
             MenuButton(
                 text = "CONTINUE OUTBREAK",
-                onClick = { /* TODO: Re-enable in Step 3 */ },
-                enabled = false
+                onClick = onOpenSaveLoad
             )
             
             Spacer(modifier = Modifier.height(16.dp))

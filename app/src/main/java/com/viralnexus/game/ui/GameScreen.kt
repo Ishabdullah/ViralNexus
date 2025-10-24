@@ -14,22 +14,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-// import androidx.lifecycle.compose.LifecycleResumeEffect // Temporarily disabled for Step 1 (unused)
 import com.viralnexus.game.engine.GameStatistics
 import com.viralnexus.game.models.*
-// import com.viralnexus.game.repository.SaveGameRepository // Temporarily disabled for Step 1
+import com.viralnexus.game.repository.SaveGameRepository
 import com.viralnexus.game.utils.formatNumber
 import com.viralnexus.game.viewmodel.GameViewModel
-// import kotlinx.coroutines.launch // Temporarily disabled for Step 1 (unused)
+import kotlinx.coroutines.launch
 
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
-    // saveGameRepository: SaveGameRepository, // Temporarily disabled for Step 1
+    saveGameRepository: SaveGameRepository,
     onExit: () -> Unit
 ) {
-    // var showSaveDialog by remember { mutableStateOf(false) } // Temporarily disabled for Step 1
-    // val coroutineScope = rememberCoroutineScope() // Temporarily disabled for Step 1
+    var showSaveDialog by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     // Collect state from ViewModel
     val gameStarted by viewModel.gameStarted.collectAsState()
     val gameState by viewModel.gameState.collectAsState()
@@ -99,7 +98,7 @@ fun GameScreen(
         BottomNavigation(
             selectedTab = selectedTab,
             onTabSelected = { viewModel.selectTab(it) },
-            onSave = { /* TODO: Re-enable in Step 3 */ }, // Temporarily disabled for Step 1
+            onSave = { showSaveDialog = true },
             onExit = {
                 viewModel.resetGame()
                 onExit()
@@ -107,8 +106,7 @@ fun GameScreen(
         )
     }
 
-    // Save game dialog - Temporarily disabled for Step 1, will be fixed in Step 3
-    /*
+    // Save game dialog
     if (showSaveDialog) {
         var saveName by remember { mutableStateOf("") }
 
@@ -153,7 +151,6 @@ fun GameScreen(
             }
         )
     }
-    */
 }
 
 @Composable

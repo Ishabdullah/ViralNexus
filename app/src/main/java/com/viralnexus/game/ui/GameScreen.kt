@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.LifecycleResumeEffect
+// import androidx.lifecycle.compose.LifecycleResumeEffect // Temporarily disabled for Step 1 (unused)
 import com.viralnexus.game.engine.GameStatistics
 import com.viralnexus.game.models.*
 // import com.viralnexus.game.repository.SaveGameRepository // Temporarily disabled for Step 1

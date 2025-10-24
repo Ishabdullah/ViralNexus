@@ -52,6 +52,24 @@ fun GameScreen(
         return
     }
 
+    // Check for game over
+    if (gameStatistics != null && gameStatistics!!.gameStatus != GameStatus.IN_PROGRESS) {
+        GameOverScreen(
+            gameStatus = gameStatistics!!.gameStatus,
+            statistics = gameStatistics!!,
+            pathogenName = gameState!!.pathogen.name,
+            onNewGame = {
+                viewModel.resetGame()
+                // Will show setup screen again since gameStarted becomes false
+            },
+            onMainMenu = {
+                viewModel.resetGame()
+                onExit()
+            }
+        )
+        return
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

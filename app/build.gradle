@@ -21,17 +21,6 @@ android {
         }
     }
 
-    sourceSets {
-        main {
-            java {
-                // Exclude .bak directories from compilation (Step 1 - will restore in Step 3)
-                exclude '**/database.bak/**'
-                exclude '**/repository.bak/**'
-                exclude '**/*.bak'
-            }
-        }
-    }
-
     buildTypes {
         release {
             minifyEnabled false

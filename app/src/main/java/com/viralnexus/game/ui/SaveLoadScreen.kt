@@ -63,7 +63,7 @@ fun SaveLoadScreen(
                     modifier = Modifier.padding(32.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Save,
+                        imageVector = Icons.Default.Delete,
                         contentDescription = null,
                         modifier = Modifier.size(64.dp),
                         tint = Color(0xFF778DA9)
@@ -215,8 +215,8 @@ fun SaveGameCard(
         ) {
             // Icon based on game status
             val (icon, iconColor) = when (save.gameStatus) {
-                "VICTORY" -> Icons.Default.CheckCircle to Color(0xFF06FFA5)
-                "DEFEAT" -> Icons.Default.Cancel to Color(0xFFE63946)
+                "VICTORY" -> Icons.Default.Done to Color(0xFF06FFA5)
+                "DEFEAT" -> Icons.Default.Close to Color(0xFFE63946)
                 else -> Icons.Default.PlayArrow to Color(0xFFF77F00)
             }
 
